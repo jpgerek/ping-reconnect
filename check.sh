@@ -13,7 +13,7 @@ network_device=${network_device:-"wi-fi"};
 network_interface=${network_interface:-"en0"};
 maximum_RTT=${maximum_RTT:-"2"}; # seconds
 interval=${interval:-"1"};
-errors_limit=${errors_limit:-"10"};
+errors_limit=${errors_limit:-"8"};
 
 
 reconnections_counter=0;
@@ -41,8 +41,8 @@ reconnect () {
 		ping_return_code=$?;
 		if [ $ping_return_code -ne 0 ]
 		then
-			echo "\n\tnetwork: $network_return_code";
-			echo "\tping: $ping_return_code";
+			# echo "\n\tnetwork: $network_return_code";
+			# echo "\tping: $ping_return_code";
 			echo "\n\t\tError connecting, retrying...";
 			continue;
 		else
@@ -54,6 +54,12 @@ reconnect () {
 	echo "\t\tNumber of connections: $reconnections_counter.";
 }
 
+control_c() {
+	echo "";
+	exit 3;
+}
+
+trap control_c SIGINT;
 
 # Checking if we are connected.
 networksetup -getairportnetwork "$network_interface" | grep -q "You are not associated with an AirPort network";
@@ -71,7 +77,8 @@ do
 	if [ $? -ne 0 ]
 	then
 		errors_counter=$(($errors_counter+1));
-		echo "\tTimeout or error in the ping: $errors_counter.";
+		echo "\033[31m!\033[0m\c";
+		# echo "\tTimeout or error in the ping: $errors_counter.";
 		if [ $errors_counter -ge $errors_limit ]
 		then
 			errors_counter=0;
@@ -80,11 +87,8 @@ do
 			continue;
 		fi
 	else
-		if [ $errors_counter -ne 0 ]
-		then
-			echo "\tResetting error's counter.";
-		fi
+		echo "\033[32m.\033[0m\c";
 		errors_counter=0;
+		sleep $interval;
 	fi	
-	sleep $interval;
 done
