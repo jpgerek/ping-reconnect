@@ -26,14 +26,19 @@ echo "\t\t- gateway: $gateway";
 echo "\n";
 
 reconnect () {
+	say "Connectivity problems"
 	networksetup -setairportpower $network_interface off;
 	networksetup -setairportpower $network_interface on;
 	# Wait a little till the interface is up again.
 	sleep 0.3;
 	while true
 	do
-		echo "\tConnecting...";
-		networksetup -setairportnetwork "$network_interface" "$network" $password;
+		echo " Connecting...\c";
+		networksetup -setairportnetwork "$network_interface" "$network" $password 2> /dev/null 1> /dev/null
+		if [ $? -ne 0 ]
+		then
+			continue;
+		fi
 		network_return_code=$?;
 		sleep 0.7;
 		# Retry unless there is a successful ping.
@@ -43,15 +48,15 @@ reconnect () {
 		then
 			# echo "\n\tnetwork: $network_return_code";
 			# echo "\tping: $ping_return_code";
-			echo "\n\t\tError connecting, retrying...";
+			echo " [KO] retrying. \c";
 			continue;
 		else
-			echo "\t\tConnection successful.";
+			echo " [OK] .\c";
 			break;
 		fi
 	done
 	reconnections_counter=$((reconnections_counter+1));
-	echo "\t\tNumber of connections: $reconnections_counter.";
+	echo "Number: $reconnections_counter. \c";
 }
 
 control_c() {
